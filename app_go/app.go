@@ -45,6 +45,7 @@ func showCurrentTimeMoscow() string {
 	return currentTime.Format("15:04:05") // Format as HH:MM:SS
 }
 
+
 // Home handles requests to the root URL ("/") and renders the HTML template with the current time.
 func Home(w http.ResponseWriter, r *http.Request) {
 

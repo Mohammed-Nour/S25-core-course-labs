@@ -72,4 +72,3 @@ Create environment variables
 - name: EMAIL
   value: "mo.shahin@innopolis.university"
 {{- end }}
-

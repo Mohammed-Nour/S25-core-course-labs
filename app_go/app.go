@@ -5,7 +5,23 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+// Define a counter metric
+var requestCount = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "app_requests_total",
+		Help: "Total number of requests",
+	},
+)
+
+func init() {
+	// Register the counter with Prometheus
+	prometheus.MustRegister(requestCount)
+}
 
 // PageData holds the data that will be passed to the HTML template.
 type PageData struct {
@@ -29,14 +45,27 @@ func showCurrentTimeMoscow() string {
 	return currentTime.Format("15:04:05") // Format as HH:MM:SS
 }
 
-// home handles requests to the root URL ("/") and renders the HTML template with the current time.
+
+// Home handles requests to the root URL ("/") and renders the HTML template with the current time.
 func Home(w http.ResponseWriter, r *http.Request) {
-	// Prepare the data to be passed to the template
+
+	// Increment the request counter
+	requestCount.Inc()
+
+	if templates == nil {
+		var err error
+		templates, err = template.ParseFiles("templates/index.html")
+		if err != nil {
+			http.Error(w, "Error loading template", http.StatusInternalServerError)
+			log.Println("Template loading error:", err)
+			return
+		}
+	}
+
 	data := PageData{
 		CurrentTime: showCurrentTimeMoscow(),
 	}
 
-	// Execute the template and pass the data
 	err := templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
@@ -51,9 +80,12 @@ func main() {
 	// Register the home handler for the root path
 	http.HandleFunc("/", Home)
 
+	// Expose Prometheus metrics on /metrics
+	http.Handle("/metrics", promhttp.Handler())
+
 	// Start the HTTP server on port 3000
-	log.Println("Starting server on :3000...")
-	err := http.ListenAndServe(":3000", nil)
+	log.Println("Starting server on :3500...")
+	err := http.ListenAndServe("0.0.0.0:3500", nil)
 	if err != nil {
 		log.Fatal("Server failed:", err) // Log and exit if the server fails to start
 	}

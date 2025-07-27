@@ -46,6 +46,7 @@ spec:
           env:
             {{- include "app-go.envName" . | nindent 12 }}
             {{- include "app-go.envEmail" . | nindent 12 }}
+
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

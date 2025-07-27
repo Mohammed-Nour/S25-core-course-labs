@@ -1,18 +1,29 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: {{ include "app-go.fullname" . }}
+  name: {{ include "app_python_chart.fullname" . }}
   labels:
-    {{- include "app-go.labels" . | nindent 4 }}
+    {{- include "app_python_chart.labels" . | nindent 4 }}
     {{- include "library.labels" . | nindent 4 }}
 spec:
+  podManagementPolicy: {{ .Values.podManagementPolicy }}
+  serviceName: {{ include "app_python_chart.fullname" . }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "app-go.selectorLabels" . | nindent 6 }}
+      {{- include "app_python_chart.selectorLabels" . | nindent 6 }}
       {{- include "library.labels" . | nindent 6 }}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Values.volumeClaimTemplates.name }}
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.volumeClaimTemplates.storage }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -20,7 +31,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "app-go.labels" . | nindent 8 }}
+        {{- include "app_python_chart.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -30,7 +41,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "app-go.serviceAccountName" . }}
+      serviceAccountName: {{ include "app_python_chart.serviceAccountName" . }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -44,11 +55,11 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            {{- include "app-go.envName" . | nindent 12 }}
-            {{- include "app-go.envEmail" . | nindent 12 }}
+            {{- include "app_python_chart.envName" . | nindent 12 }}
+            {{- include "app_python_chart.envEmail" . | nindent 12 }}
           envFrom:
             - configMapRef:
-                name: go-config
+                name: flask-config
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

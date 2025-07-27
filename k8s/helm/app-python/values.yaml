@@ -139,12 +139,10 @@ affinity: {}
 
 config:
   path: "files/config.json"
-
 env:
   ENV: "default"
-
 podManagementPolicy: Parallel
-
 volumeClaimTemplates:
   name: app-python-pvc
   storage: 512Mi
+
